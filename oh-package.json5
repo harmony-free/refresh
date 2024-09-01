@@ -1,0 +1,21 @@
+{
+  "name": "@free/refresh",
+  "version": "1.0.0",
+  "description": "这是一个下拉刷新下拉加载的状态控制插件",
+  "keywords": [
+    "refresh",
+    "loading",
+    "upData",
+    "downData",
+  ],
+  "main": "Index.ets",
+  "author": {
+    "name": "余邦锦",
+    "email": "15179861454@163.com"
+  },
+  "homepage": "https://gitee.com/harmony-free/refresh",
+  "repository": "https://gitee.com/harmony-free/refresh",
+  "license": "MIT",
+  "modelVersion": "5.0.0",
+  "dependencies": {}
+}
