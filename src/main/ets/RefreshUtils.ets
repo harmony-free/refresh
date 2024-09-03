@@ -14,6 +14,78 @@ export const RefreshPDecorator: PropertyDecorator = (target, propertyKey) => {
 }
 
 
+export interface PageFace {
+  page: number
+  size: number
+  totalCount: number
+}
+
+@ObservedV2
+export class RefreshData<T = object> implements PageFace {
+  page: number = 0
+  size: number = 20
+  data: BaseDataSource<T> = new BaseDataSource<T>();
+  totalCount: number = 100
+  @Trace length: number = 0
+  _pageFace: PageFace | undefined
+
+  get pageFace(): PageFace {
+    if (this._pageFace == undefined) {
+      this._pageFace = { page: this.page, size: this.size, totalCount: this.totalCount } as PageFace
+    }
+    return this._pageFace
+  }
+
+  request?: (page?: PageFace) => Promise<boolean | Array<T>>
+  upData?: (page?: PageFace) => Promise<boolean | Array<T>>
+  downData?: (page?: PageFace) => Promise<boolean | Array<T>>
+
+  refresh(): Promise<boolean> {
+    this.page = 0
+    return new Promise((res, rej) => {
+      if (this.upData) {
+        this.upData(this.pageFace).then((data) => {
+          if (data instanceof Array) {
+            this.data.setData(data)
+            this.length = this.data.totalCount()
+            res(true)
+          } else {
+            res(data ?? false)
+          }
+        }).catch((err: Error) => {
+          promptAction.showToast({ message: err.message })
+          res(false)
+        })
+      } else {
+        res(true)
+      }
+    })
+  }
+
+  loading(): Promise<boolean> {
+    this.page += 1
+    return new Promise((res, rej) => {
+      if (this.downData) {
+        this.downData(this.pageFace).then((data) => {
+          if (data instanceof Array) {
+            this.data.pushData(...data)
+            this.length = this.data.totalCount()
+            res(true)
+          } else {
+            res(data ?? false)
+          }
+        }).catch((err: Error) => {
+          promptAction.showToast({ message: err.message })
+          res(false)
+        })
+      } else {
+        res(true)
+      }
+    })
+  }
+}
+
+
 export enum RefreshState {
   normal,
   runAll,
@@ -31,7 +103,7 @@ export enum RefreshState {
 
 
 @ObservedV2
-export class RefreshUtils<T = object> {
+export class RefreshUtils<T = object> extends RefreshData<T> {
   @Trace scroller: Scroller = new ListScroller()
   @Trace state: RefreshState = RefreshState.normal
   @Trace offsetY: number = 0.0
@@ -43,7 +115,8 @@ export class RefreshUtils<T = object> {
   max: number = 0
   eventY: number = 0.0
   @Trace animator: AnimatorUtils = new AnimatorUtils()
-  @Trace refreshData: RefreshData<T> = new RefreshData<T>()
+
+  // @Trace refreshData: RefreshData<T> = new RefreshData<T>()
 
   isRefresh() {
     if (this.state == RefreshState.readLoading ||
@@ -128,7 +201,7 @@ export class RefreshUtils<T = object> {
         this.state = RefreshState.onRefresh
         this.close(this.upHeight).then(() => {
           this.animator.animator.play()
-          this.refreshData.refresh().then((data) => {
+          this.refresh().then((data) => {
             this.state = data ? RefreshState.successRefresh : RefreshState.failRefresh
             this.animator.animator.cancel()
             setTimeout(() => {
@@ -144,7 +217,7 @@ export class RefreshUtils<T = object> {
         this.state = RefreshState.onLoading
         this.close(this.downHeight).then(() => {
           this.animator.animator.play()
-          this.refreshData.loading().then((data) => {
+          this.loading().then((data) => {
             this.state = data ? RefreshState.successLoading : RefreshState.failLoading
             this.animator.animator.cancel()
             setTimeout(() => {
@@ -178,77 +251,6 @@ export class RefreshUtils<T = object> {
       }, () => {
         this.offsetY = y
       })
-    })
-  }
-}
-
-export interface PageFace {
-  page: number
-  size: number
-  totalCount: number
-}
-
-@ObservedV2
-export class RefreshData<T = object> implements PageFace {
-  page: number = 0
-  size: number = 20
-  data: BaseDataSource<T> = new BaseDataSource<T>();
-  totalCount: number = 100
-  @Trace length: number = 0
-  _pageFace: PageFace | undefined
-
-  get pageFace(): PageFace {
-    if (this._pageFace == undefined) {
-      this._pageFace = { page: this.page, size: this.size, totalCount: this.totalCount } as PageFace
-    }
-    return this._pageFace
-  }
-
-  request?: (page?: PageFace) => Promise<boolean | Array<T>>
-  upData?: (page?: PageFace) => Promise<boolean | Array<T>>
-  downData?: (page?: PageFace) => Promise<boolean | Array<T>>
-
-  refresh(): Promise<boolean> {
-    this.page = 0
-    return new Promise((res, rej) => {
-      if (this.upData) {
-        this.upData(this.pageFace).then((data) => {
-          if (data instanceof Array) {
-            this.data.setData(data)
-            this.length = this.data.totalCount()
-            res(true)
-          } else {
-            res(data ?? false)
-          }
-        }).catch((err: Error) => {
-          promptAction.showToast({ message: err.message })
-          res(false)
-        })
-      } else {
-        res(true)
-      }
-    })
-  }
-
-  loading(): Promise<boolean> {
-    this.page += 1
-    return new Promise((res, rej) => {
-      if (this.downData) {
-        this.downData(this.pageFace).then((data) => {
-          if (data instanceof Array) {
-            this.data.pushData(...data)
-            this.length = this.data.totalCount()
-            res(true)
-          } else {
-            res(data ?? false)
-          }
-        }).catch((err: Error) => {
-          promptAction.showToast({ message: err.message })
-          res(false)
-        })
-      } else {
-        res(true)
-      }
     })
   }
 }

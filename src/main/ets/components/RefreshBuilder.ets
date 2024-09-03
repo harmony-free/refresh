@@ -96,7 +96,7 @@ class NormalInfo implements NormalInfoFace {
 }
 
 @Builder
-export function NormalBuilder(info: NormalInfoFace) {
+export function NormalBuilder(info: NormalInfoFace = new NormalInfo) {
   if (info.show) {
     Column() {
       if (info.img) {
@@ -114,4 +114,4 @@ export function NormalBuilder(info: NormalInfoFace) {
 
 export const refreshView = wrapBuilder(refreshBuilder)
 
-export const normalView = wrapBuilder(NormalBuilder)
+export const normalView = wrapBuilder<[NormalInfoFace]>(NormalBuilder)

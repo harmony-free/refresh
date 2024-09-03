@@ -1,63 +1,70 @@
-import { PageFace, RefreshState, RefreshUtils } from '../RefreshUtils'
-import { NormalInfoFace, normalView, refreshView } from './RefreshBuilder'
+import { PageFace, RefreshUtils } from '../RefreshUtils'
+import { normalView, refreshView } from './RefreshBuilder'
 
 
-export class CaseErrorModel {
-  divisionalCaseId: number = 0
-  divisionalCaseNo: string = ""
-  state: number = 0
-  deductionMemo: string = ""
-  applyTime: string = ""
-  errors: [] = []
-  photoClaimReason: number = 0
-  canFund: boolean = false
-  icDivisionalCaseNo: string = ""
-  canPhotoClaim: number = 0
-  errorImageList: [] | undefined = undefined
+// List可以为任意组件
+@Extend(List)
+function refresh(refresh: RefreshUtils) {
+  .offset({ x: 0, y: refresh.offsetY }) // 滑动的位置
+  .onTouch((e) => refresh.onTouch(e)) // 滑动手势
+  .enabled(refresh.state < 4) // 禁止在刷新或加载的过程中继续滑动
+}
+
+export class RefreshModel {
+  title: string = "RefreshModel"
 }
 
 @Component
 export struct RefreshComponent {
-  refresh: RefreshUtils = new RefreshUtils()
-  info: NormalInfoFace | undefined
-  @BuilderParam itemBuilderParam: <T>(data: T) => void = this.itemBuilder;
+  refresh: RefreshUtils<RefreshModel> = new RefreshUtils<RefreshModel>()
 
   @Builder
-  itemBuilder() {
-    Text("请根据需求创建item组件")
+  itemBuilder(data: RefreshModel) {
+    Text(data.title)
   }
 
-  //
-  // aboutToAppear(): void {
-  //   this.refresh.refreshData.upData = this.upData
-  // }
-  //
-  // upData(page?: PageFace | undefined): Promise<boolean | Array<CaseErrorModel>> {
-  //   return new Promise<boolean | Array<CaseErrorModel>>((res, rej) => {
-  //     res([new CaseErrorModel])
-  //   })
-  // }
+  aboutToAppear(): void {
+    this.refresh.upData = this.upData
+    this.refresh.downData = this.downData
+  }
+
+  upData(page?: PageFace | undefined): Promise<boolean | Array<RefreshModel>> {
+    return new Promise<boolean | Array<RefreshModel>>((res, rej) => {
+      setTimeout(() => {
+        res([new RefreshModel()])
+      }, 2000)
+    })
+  }
+
+  downData(page?: PageFace | undefined): Promise<boolean | Array<RefreshModel>> {
+    return new Promise<boolean | Array<RefreshModel>>((res, rej) => {
+      setTimeout(() => {
+        res([new RefreshModel])
+      }, 2000)
+    })
+  }
 
   build() {
     RelativeContainer() {
+      // 加载刷新的UI
       refreshView.builder(this.refresh)
       List({ space: 5, scroller: this.refresh.scroller }) {
-        LazyForEach(this.refresh.refreshData.data, (data: object) => {
+        LazyForEach(this.refresh.data, (data: RefreshModel) => {
           ListItem() {
-            this.itemBuilderParam(data)
+            this.itemBuilder(data)
           }.padding(10).backgroundColor(0xFFFFFF)
-        }, (item: object, index: number) => index.toString())
+        }, (item: RefreshModel, index: number) => index.toString())
       }
       .width('100%')
       .height('100%')
       .backgroundColor(0xEEEEEE)
       .padding({ top: 5 })
       .cachedCount(3)
-      .edgeEffect(EdgeEffect.None, { alwaysEnabled: true })
-      .offset({ x: 0, y: this.refresh.offsetY })
-      .onTouch((e) => this.refresh.onTouch(e))
+      .refresh(this.refresh)
 
-      normalView.builder(this.info ?? { msg: '暂无数据', show: this.refresh.refreshData.length == 0 })
+      if (this.refresh.length == 0) {
+        normalView.builder(undefined)
+      }
     }.height('90%').clip(true)
   }
 }
