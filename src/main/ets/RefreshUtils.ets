@@ -20,6 +20,11 @@ export interface PageFace {
   totalCount: number
 }
 
+interface RefreshDataFace<T> {
+  upData?: (page?: PageFace) => Promise<boolean | Array<T>>
+  downData?: (page?: PageFace) => Promise<boolean | Array<T>>
+}
+
 @ObservedV2
 export class RefreshData<T = object> implements PageFace {
   page: number = 0
@@ -34,6 +39,11 @@ export class RefreshData<T = object> implements PageFace {
       this._pageFace = { page: this.page, size: this.size, totalCount: this.totalCount } as PageFace
     }
     return this._pageFace
+  }
+
+  constructor(refresh?: RefreshDataFace<T>) {
+    this.upData = refresh?.upData
+    this.downData = refresh?.downData
   }
 
   request?: (page?: PageFace) => Promise<boolean | Array<T>>
@@ -115,8 +125,6 @@ export class RefreshUtils<T = object> extends RefreshData<T> {
   max: number = 0
   eventY: number = 0.0
   @Trace animator: AnimatorUtils = new AnimatorUtils()
-
-  // @Trace refreshData: RefreshData<T> = new RefreshData<T>()
 
   isRefresh() {
     if (this.state == RefreshState.readLoading ||

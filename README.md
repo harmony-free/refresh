@@ -15,6 +15,31 @@
 
 #### 使用说明
 
+简单例子
+
+```
+    // 实例化
+    private refresh: RefreshUtils = new RefreshUtils()
+    
+    // 构建UI
+    RelativeContainer() {
+      // 加载刷新的UI
+      upView.builder(this.refresh)
+      List({ space: 5, scroller: this.refresh.scroller }) {
+        LazyForEach(this.refresh.data, (data: Object) => {
+          ListItem() {
+            this.itemBuilderParam(data)
+          }.padding(10).backgroundColor(0xFFFFFF)
+        }, (item: RefreshModel, index: number) => index.toString())
+      }
+      .refresh(this.refresh)
+
+      if (this.refresh.length == 0) {
+        normalView.builder(undefined)
+      }
+    }.height('90%').clip(true)
+```
+
 1、引入工具类
 
 ```
@@ -83,7 +108,7 @@ if (this.refresh.length == 0) {
 }
 ```
 
-7、使用全部代码
+7、直接复制全部代码 根据自己的需求修改配置
 
 ```
 import { PageFace, RefreshUtils } from '../RefreshUtils'

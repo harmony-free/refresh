@@ -1,5 +1,5 @@
 import { PageFace, RefreshUtils } from '../RefreshUtils'
-import { normalView, refreshView } from './RefreshBuilder'
+import { normalView, upView } from './RefreshBuilder'
 
 
 // List可以为任意组件
@@ -16,17 +16,20 @@ export class RefreshModel {
 
 @Component
 export struct RefreshComponent {
-  refresh: RefreshUtils<RefreshModel> = new RefreshUtils<RefreshModel>()
+  refresh: RefreshUtils<RefreshModel> = new RefreshUtils<RefreshModel>({ upData: this.upData, downData: this.downData })
+  @BuilderParam itemBuilderParam: (data: RefreshModel) => void = this.itemBuilder;
+  @BuilderParam upBuilderParam: (refresh: RefreshUtils<RefreshModel>) => void
+  @BuilderParam downBuilderParam: (refresh: RefreshUtils<RefreshModel>) => void
 
   @Builder
   itemBuilder(data: RefreshModel) {
     Text(data.title)
   }
 
-  aboutToAppear(): void {
-    this.refresh.upData = this.upData
-    this.refresh.downData = this.downData
-  }
+  // aboutToAppear(): void {
+  //   this.refresh.upData = this.upData
+  //   this.refresh.downData = this.downData
+  // }
 
   upData(page?: PageFace | undefined): Promise<boolean | Array<RefreshModel>> {
     return new Promise<boolean | Array<RefreshModel>>((res, rej) => {
@@ -47,11 +50,11 @@ export struct RefreshComponent {
   build() {
     RelativeContainer() {
       // 加载刷新的UI
-      refreshView.builder(this.refresh)
+      upView.builder(this.refresh)
       List({ space: 5, scroller: this.refresh.scroller }) {
         LazyForEach(this.refresh.data, (data: RefreshModel) => {
           ListItem() {
-            this.itemBuilder(data)
+            this.itemBuilderParam(data)
           }.padding(10).backgroundColor(0xFFFFFF)
         }, (item: RefreshModel, index: number) => index.toString())
       }
@@ -68,3 +71,4 @@ export struct RefreshComponent {
     }.height('90%').clip(true)
   }
 }
+

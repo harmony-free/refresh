@@ -3,7 +3,7 @@ import { DrawableDescriptor } from '@ohos.arkui.drawableDescriptor'
 import image from '@ohos.multimedia.image'
 
 @Builder
-export function refreshBuilder(refresh: RefreshUtils) {
+export function upBuilder(refresh: RefreshUtils) {
   if (refresh.state == RefreshState.normal) {
 
   } else if (refresh.isRefresh()) {
@@ -109,9 +109,9 @@ export function NormalBuilder(info: NormalInfoFace = new NormalInfo) {
     })
     .enabled(false)
   }
-
 }
 
-export const refreshView = wrapBuilder(refreshBuilder)
+
+export const upView = wrapBuilder(upBuilder)
 
 export const normalView = wrapBuilder<[NormalInfoFace]>(NormalBuilder)
