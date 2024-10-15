@@ -1,5 +1,5 @@
 import { PageFace, RefreshUtils } from '../RefreshUtils'
-import { normalView, upView } from './RefreshBuilder'
+import { normalView, refreshView } from './RefreshBuilder'
 
 
 // List可以为任意组件
@@ -50,7 +50,7 @@ export struct RefreshComponent {
   build() {
     RelativeContainer() {
       // 加载刷新的UI
-      upView.builder(this.refresh)
+      refreshView.builder(this.refresh)
       List({ space: 5, scroller: this.refresh.scroller }) {
         LazyForEach(this.refresh.data, (data: RefreshModel) => {
           ListItem() {

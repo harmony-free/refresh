@@ -24,7 +24,7 @@
     // 构建UI
     RelativeContainer() {
       // 加载刷新的UI
-      upView.builder(this.refresh)
+      refreshView.builder(this.refresh)
       List({ space: 5, scroller: this.refresh.scroller }) {
         LazyForEach(this.refresh.data, (data: Object) => {
           ListItem() {
