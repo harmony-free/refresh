@@ -21,8 +21,10 @@ export interface PageFace {
 }
 
 interface RefreshDataFace<T> {
-  upData?: (page?: PageFace) => Promise<boolean | Array<T>>
-  downData?: (page?: PageFace) => Promise<boolean | Array<T>>
+  load?: ((page?: PageFace) => Promise<boolean | Array<T>>)
+  data?: Array<T>
+  upData?: ((page?: PageFace) => Promise<boolean | Array<T>>)
+  downData?: ((page?: PageFace) => Promise<boolean | Array<T>>)
 }
 
 @ObservedV2
@@ -44,6 +46,8 @@ export class RefreshData<T = object> implements PageFace {
   constructor(refresh?: RefreshDataFace<T>) {
     this.upData = refresh?.upData
     this.downData = refresh?.downData
+    this.data.setData(refresh?.data ?? [])
+    this.length = this.data.totalCount()
   }
 
   request?: (page?: PageFace) => Promise<boolean | Array<T>>
@@ -51,7 +55,7 @@ export class RefreshData<T = object> implements PageFace {
   downData?: (page?: PageFace) => Promise<boolean | Array<T>>
 
   refresh(): Promise<boolean> {
-    this.page = 0
+    this.pageFace.page = 0
     return new Promise((res, rej) => {
       if (this.upData) {
         this.upData(this.pageFace).then((data) => {
@@ -73,7 +77,7 @@ export class RefreshData<T = object> implements PageFace {
   }
 
   loading(): Promise<boolean> {
-    this.page += 1
+    this.pageFace.page += 1
     return new Promise((res, rej) => {
       if (this.downData) {
         this.downData(this.pageFace).then((data) => {
@@ -114,7 +118,7 @@ export enum RefreshState {
 
 @ObservedV2
 export class RefreshUtils<T = object> extends RefreshData<T> {
-  @Trace scroller: Scroller = new ListScroller()
+  @Trace scroller: Scroller = new Scroller()
   @Trace state: RefreshState = RefreshState.normal
   @Trace offsetY: number = 0.0
   @Trace refreshTiming: Date = new Date()
@@ -127,14 +131,26 @@ export class RefreshUtils<T = object> extends RefreshData<T> {
   @Trace animator: AnimatorUtils = new AnimatorUtils()
 
   isRefresh() {
+    if (this.state == RefreshState.readRefresh ||
+      this.state == RefreshState.runRefresh ||
+      this.state == RefreshState.successRefresh ||
+      this.state == RefreshState.failRefresh ||
+      this.state == RefreshState.onRefresh) {
+      return true
+    } else {
+      return false
+    }
+  }
+
+  isLoading() {
     if (this.state == RefreshState.readLoading ||
       this.state == RefreshState.runLoading ||
       this.state == RefreshState.successLoading ||
       this.state == RefreshState.failLoading ||
       this.state == RefreshState.onLoading) {
-      return false
-    } else {
       return true
+    } else {
+      return false
     }
   }
 
@@ -147,6 +163,15 @@ export class RefreshUtils<T = object> extends RefreshData<T> {
       let offset = this.scroller.currentOffset()
       if ((offset.yOffset <= 0 && this.eventY == 0) && (this.scroller.isAtEnd() && this.eventY == 0)) {
         this.eventY = event.touches[0].y
+        animateTo({
+          duration: 150,
+          delay: 50,
+          onFinish: () => {
+            this.eventY = event.touches[0].y
+          }
+        }, () => {
+          this.eventY = event.touches[0].y
+        })
         this.state = RefreshState.runAll
         this.max = offset.yOffset
         return
@@ -204,7 +229,7 @@ export class RefreshUtils<T = object> extends RefreshData<T> {
       }
 
     } else if (event.type == TouchType.Up) {
-      if (this.state == RefreshState.readRefresh) {
+      if (this.state == RefreshState.readRefresh && this.upData != undefined) {
         this.refreshTiming = new Date()
         this.state = RefreshState.onRefresh
         this.close(this.upHeight).then(() => {
@@ -220,7 +245,7 @@ export class RefreshUtils<T = object> extends RefreshData<T> {
             }, this.timing)
           })
         })
-      } else if (this.state == RefreshState.readLoading) {
+      } else if (this.state == RefreshState.readLoading && this.downData != undefined) {
         this.loadingTiming = new Date()
         this.state = RefreshState.onLoading
         this.close(this.downHeight).then(() => {

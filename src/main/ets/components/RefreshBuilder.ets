@@ -1,12 +1,11 @@
 import { RefreshState, RefreshUtils } from '../RefreshUtils'
 import { DrawableDescriptor } from '@ohos.arkui.drawableDescriptor'
 import image from '@ohos.multimedia.image'
+import { Size } from '@ohos/hypium'
 
 @Builder
 export function refreshBuilder(refresh: RefreshUtils) {
-  if (refresh.state == RefreshState.normal) {
-
-  } else if (refresh.isRefresh()) {
+  if (refresh.isRefresh() && refresh.upData != undefined) {
     Row() {
       if (refresh.state == RefreshState.runRefresh) {
         Text("↓").fontSize(25)
@@ -42,7 +41,7 @@ export function refreshBuilder(refresh: RefreshUtils) {
     .width('100%')
     .justifyContent(FlexAlign.Center)
     .position({ top: 0 })
-  } else {
+  } else if (refresh.isLoading() && refresh.downData != undefined) {
     Row() {
       if (refresh.state == RefreshState.runLoading) {
         Text("↑").fontSize(25)
@@ -83,16 +82,25 @@ export function refreshBuilder(refresh: RefreshUtils) {
 
 export interface NormalInfoFace {
   img?: PixelMap | ResourceStr | DrawableDescriptor
-  msg: string
-  imgSize?: Size
-  show: boolean
+  msg?: string
+  imgSize?: SizeOptions
+  show?: boolean
 }
 
-class NormalInfo implements NormalInfoFace {
-  imgSize?: Size | undefined
-  show: boolean = true
-  img?: image.PixelMap | ResourceStr | DrawableDescriptor = $r('sys.symbol.doc_text_badge_magnifyingglass')
-  msg: string = '暂无数据'
+export  class NormalInfo implements NormalInfoFace {
+  imgSize?: SizeOptions = {width:150,height:150}
+  show?: boolean  = true
+  img?: image.PixelMap | ResourceStr | DrawableDescriptor = $r('sys.media.ohos_ic_normal_white_grid_folder')
+  msg?: string = '暂无数据'
+
+  constructor(face?:NormalInfoFace) {
+    if (face != undefined) {
+      this.imgSize = face.imgSize ?? {width:150,height:150}
+      this.msg = face.msg ?? '暂无数据'
+      this.show = face.show ?? true
+      this.img = face.img ?? $r('sys.media.ohos_ic_normal_white_grid_folder')
+    }
+  }
 }
 
 @Builder

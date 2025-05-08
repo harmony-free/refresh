@@ -18,18 +18,22 @@ export class RefreshModel {
 export struct RefreshComponent {
   refresh: RefreshUtils<RefreshModel> = new RefreshUtils<RefreshModel>({ upData: this.upData, downData: this.downData })
   @BuilderParam itemBuilderParam: (data: RefreshModel) => void = this.itemBuilder;
-  @BuilderParam upBuilderParam: (refresh: RefreshUtils<RefreshModel>) => void
-  @BuilderParam downBuilderParam: (refresh: RefreshUtils<RefreshModel>) => void
+  @BuilderParam upBuilderParam: (refresh: RefreshUtils<RefreshModel>) => void = this.onUpBuilder
+  @BuilderParam downBuilderParam: (refresh: RefreshUtils<RefreshModel>) => void = this.onDownBuilder
 
   @Builder
   itemBuilder(data: RefreshModel) {
     Text(data.title)
   }
 
-  // aboutToAppear(): void {
-  //   this.refresh.upData = this.upData
-  //   this.refresh.downData = this.downData
-  // }
+  aboutToAppear(): void {
+    this.refresh.upData = this.upData
+    this.refresh.downData = this.downData
+    this.refresh.scroller.scrollTo({
+      yOffset: '50',
+      xOffset: '0'
+    });
+  }
 
   upData(page?: PageFace | undefined): Promise<boolean | Array<RefreshModel>> {
     return new Promise<boolean | Array<RefreshModel>>((res, rej) => {
@@ -47,15 +51,25 @@ export struct RefreshComponent {
     })
   }
 
+  @Builder
+  onUpBuilder(){
+    refreshView.builder(this.refresh)
+  }
+
+  @Builder
+  onDownBuilder(){
+    normalView.builder(undefined)
+  }
+
   build() {
     RelativeContainer() {
       // 加载刷新的UI
-      refreshView.builder(this.refresh)
+      this.onUpBuilder()
       List({ space: 5, scroller: this.refresh.scroller }) {
         LazyForEach(this.refresh.data, (data: RefreshModel) => {
           ListItem() {
             this.itemBuilderParam(data)
-          }.padding(10).backgroundColor(0xFFFFFF)
+          }
         }, (item: RefreshModel, index: number) => index.toString())
       }
       .width('100%')
@@ -68,7 +82,7 @@ export struct RefreshComponent {
       if (this.refresh.length == 0) {
         normalView.builder(undefined)
       }
-    }.height('90%').clip(true)
+    }.height('100%').clip(true)
   }
 }
 
