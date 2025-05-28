@@ -11,17 +11,18 @@ function refresh(refresh: RefreshUtils) {
 
 @Component
 export struct RefreshList{
+
   @BuilderParam headerBuilderParam: () => void;
   @BuilderParam footerBuilderParam: () => void;
   @BuilderParam itemBuilderParam: (data: object ,index:number) => void;
   @BuilderParam refreshViewParam: (refresh: RefreshUtils) => void = this.refreshView;
   @BuilderParam normalViewParam: () => void = this.normalView;
+  color: ResourceColor = Color.White
   refresh: RefreshUtils = new RefreshUtils()
   normalInfo:NormalInfoFace = new NormalInfo();
   space:number = 0;
   initialIndex:number = 0;
   cachedCount:number = 3;
-
 
   @Builder refreshView(refresh: RefreshUtils){
     // 加载刷新的UI
@@ -52,7 +53,7 @@ export struct RefreshList{
       .width('100%')
       .height('100%')
       .cachedCount(this.cachedCount)
-      .refresh(this.refresh)
+      .refresh(this.refresh).backgroundColor(this.color)
 
       if (this.refresh.length == 0 && this.headerBuilderParam == undefined && this.footerBuilderParam == undefined) {
         this.normalViewParam()

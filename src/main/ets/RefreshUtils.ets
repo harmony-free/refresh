@@ -21,6 +21,8 @@ export interface PageFace {
 }
 
 interface RefreshDataFace<T> {
+  outTime?:number
+  isRefresh?:boolean
   load?: ((page?: PageFace) => Promise<boolean | Array<T>>)
   data?: Array<T>
   upData?: ((page?: PageFace) => Promise<boolean | Array<T>>)
@@ -29,10 +31,12 @@ interface RefreshDataFace<T> {
 
 @ObservedV2
 export class RefreshData<T = object> implements PageFace {
+  isUpdate:boolean = true;
   page: number = 0
   size: number = 20
   data: BaseDataSource<T> = new BaseDataSource<T>();
   totalCount: number = 100
+  outTime: number = 8000
   @Trace length: number = 0
   _pageFace: PageFace | undefined
 
@@ -48,6 +52,9 @@ export class RefreshData<T = object> implements PageFace {
     this.downData = refresh?.downData
     this.data.setData(refresh?.data ?? [])
     this.length = this.data.totalCount()
+    if (refresh?.isRefresh != false) {
+      this.refresh();
+    }
   }
 
   request?: (page?: PageFace) => Promise<boolean | Array<T>>
@@ -156,7 +163,7 @@ export class RefreshUtils<T = object> extends RefreshData<T> {
 
 
   onTouch(event: TouchEvent) {
-    if (event == undefined) {
+    if (event == undefined || this.eventY == event.touches[0].y) {
       return
     }
     if (event.type == TouchType.Move) {
