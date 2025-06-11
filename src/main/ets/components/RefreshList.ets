@@ -53,11 +53,12 @@ export struct RefreshList{
       .width('100%')
       .height('100%')
       .cachedCount(this.cachedCount)
-      .refresh(this.refresh).backgroundColor(this.color)
+      .refresh(this.refresh)
+      .backgroundColor(this.color)
 
       if (this.refresh.length == 0 && this.headerBuilderParam == undefined && this.footerBuilderParam == undefined) {
         this.normalViewParam()
       }
-    }.clip(true)
+    }.clip(true).backgroundColor(this.color)
   }
 }
